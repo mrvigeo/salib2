@@ -87,6 +87,9 @@ end
 if msg.text == "بای" then
 	return "خدافظ ، مواظب زیباییت باش"
 end
+if msg.text == "گه نخور" then
+        return "تو بخور"
+end
 end
 
 return {
