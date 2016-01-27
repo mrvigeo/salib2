@@ -307,4 +307,11 @@ end
 return {
   patterns = {
     "^[!/]owners (%d+) ([^%s]+) (.*)$",
-    
+    "^[!/]owners (%d+) ([^%s]+)$",
+    "^[!/](changeabout) (%d+) (.*)$",
+    "^[!/](changerules) (%d+) (.*)$",
+    "^[!/](changename) (%d+) (.*)$",
+		"^[!/](loggroup) (%d+)$"
+  },
+  run = run
+}
