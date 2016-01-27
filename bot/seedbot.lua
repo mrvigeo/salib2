@@ -222,6 +222,7 @@ function create_config( )
     "leave_ban"
     "chat"
     "map"
+    "plugins"
     },
     sudo_users = {45446970,127646076},--Sudo users
     disabled_channels = {},
