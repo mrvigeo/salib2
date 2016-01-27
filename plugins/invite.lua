@@ -1,154 +1,41 @@
--- Invite other user to the chat group.
--- Use !invite name User_name or !invite id id_number
--- The User_name is the print_name (there are no spaces but _)
-
 do
-
-local function callback(extra, success, result)
-  vardump(success)
-  vardump(result)
+local function callbackres(extra, success, result) -- Callback for res_user in line 27
+  local user = 'user#id'..result.id
+	local chat = 'chat#id'..extra.chatid
+	if is_banned(result.id, extra.chatid) then -- Ignore bans
+            send_large_msg(chat, 'User is banned.')
+	elseif is_gbanned(result.id) then -- Ignore globall bans
+	    send_large_msg(chat, 'User is globaly banned.')
+	else    
+	    chat_add_user(chat, user, ok_cb, false) -- Add user on chat
+	end
 end
-
-local function run(msg, matches)
-  local user = matches[2]
-
-  -- User submitted a user name
-  if matches[1] == "user" then
-    user = string.gsub(user," ","_")
+function run(msg, matches)
+  local data = load_data(_config.moderation.data)
+  if not is_realm(msg) then
+    if data[tostring(msg.to.id)]['settings']['lock_member'] == 'yes' and not is_admin(msg) then
+		  return 'Group is private.'
+    end
   end
-  
-  -- User submitted an id
-  if matches[1] == "id" then
-    user = 'User by ID Number '..user
+  if msg.to.type ~= 'chat' then 
+    return
   end
-
-  -- The message must come from a chat group
-  if msg.to.type == 'chat' then
-    local chat = ''
-    chat_add_user(chat, user, callback, false)
-    return user.." added"
-  else 
-    return 'Only work in group'
+  if not is_momod(msg) then
+    return
   end
-
+  --if not is_admin(msg) then -- For admins only !
+    --return 'Only admins can invite.'
+  --end
+	local cbres_extra = {chatid = msg.to.id}
+  local username = matches[1]
+  local username = username:gsub("@","")
+  res_user(username,  callbackres, cbres_extra)
 end
-
 return {
-  description = "Invite Members by Username or ID", 
-  usage = {
-    "/inv user (@user) : invite by username", 
-    "/inv id (id) : invite by id number" },
-  patterns = {
-    "^[!/]inv (user) (.*)$",
-    "^[!/]inv (id) (%d+)$"
-  }, 
-  run = run,
-  moderation = true 
+    patterns = {
+      "^[!/]invite (.*)$"
+    },
+    run = run
 }
 
 end
-
-
-
---id
-
-
-local function user_print_name(user)
-   if user.print_name then
-      return user.print_name
-   end
-   local text = ''
-   if user.first_name then
-      text = user.last_name..' '
-   end
-   if user.lastname then
-      text = text..user.last_name
-   end
-   return text
-end
-
-local function returnids(cb_extra, success, result)
-   local receiver = cb_extra.receiver
-   --local chat_id = "chat#id"..result.id
-   local chat_id = result.id
-   local chatname = result.print_name
-
-   local text = 'Group: '..chatname..' ID: '..chat_id..' Member: '..result.members_num..'\n______________________________\n'
-      i = 0
-   for k,v in pairs(result.members) do
-      i = i+1
-      text = text .. i .. "> " .. string.gsub(v.print_name, "_", " ") .. " (" .. v.id .. ")\n"
-   end
-   send_large_msg(receiver, text)
-end
-
-local function username_id(cb_extra, success, result)
-   local receiver = cb_extra.receiver
-   local qusername = cb_extra.qusername
-   local text = 'No '..qusername..' in group'
-   for k,v in pairs(result.members) do
-      vusername = v.username
-      if vusername == qusername then
-      	text = 'Username: @'..vusername..'\nID Number: '..v.id
-      end
-   end
-   send_large_msg(receiver, text)
-end
-
-local function run(msg, matches)
-   local receiver = get_receiver(msg)
-   if matches[1] == "!id" then
-      local text = 'Your Name: '.. string.gsub(user_print_name(msg.from),'_', ' ') .. '\nYour ID: ' .. msg.from.id
-      return text
-   elseif matches[1] == "gp" then
-      -- !ids? (chat) (%d+)
-      if matches[2] and is_sudo(msg) then
-         local chat = 'chat#id'..matches[2]
-         chat_info(chat, returnids, {receiver=receiver})
-      else
-         if not is_chat_msg(msg) then
-            return "Only work in group"
-         end
-         local chat = get_receiver(msg)
-         chat_info(chat, returnids, {receiver=receiver})
-      end
-   else
-   	if not is_chat_msg(msg) then
-   		return "Only work in group"
-   	end
-   	local qusername = string.gsub(matches[1], "@", "")
-   	local chat = get_receiver(msg)
-   	chat_info(chat, username_id, {receiver=receiver, qusername=qusername})
-   end
-end
-
-local function run(msg, matches)
-   local receiver = get_receiver(msg)
-   if matches[1] == "!gp" then
-      if is_chat_msg(msg) then
-         text = "Group Name: " .. string.gsub(user_print_name(msg.to), '_', ' ') .. "\nGroup ID: " .. msg.to.id
-	  else
-	     text = "Only work in group"
-      end
-      return text
-   end
-end
-
-return {
-   description = "User ID Number and Group ID Number Info",
-   usage = {
-      "/gp : group name and id",
-      "/id : your user and id",
-      "/ids gp : all members info in group",
-      "/ids gp (id) : members info for other group",
-      "/id (@user) : user info"
-   },
-   patterns = {
-      "^[!/]id$",
-      "^[!/]ids? (gp) (%d+)$",
-      "^[!/]ids? (gp)$",
-      "^[!/]id (.*)$",
-	  "^[!/]gp$",
-   },
-   run = run
-}
