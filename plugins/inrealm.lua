@@ -1,312 +1,339 @@
+-- data saved to moderation.json
+-- check moderation plugin
 do
 
-local function check_member(cb_extra, success, result)
-   local receiver = cb_extra.receiver
-   local data = cb_extra.data
-   local msg = cb_extra.msg
-   for k,v in pairs(result.members) do
-      local member_id = v.id
-      if member_id ~= our_id then
-          local username = v.username
-          data[tostring(msg.to.id)] = {
-              moderators = {[tostring(member_id)] = username},
-              settings = {
-                  set_name = string.gsub(msg.to.print_name, '_', ' '),
-                  lock_name = 'no',
-                  lock_photo = 'no',
-                  lock_member = 'no'
-                  }
-            }
-          save_data(_config.moderation.data, data)
-          return send_large_msg(receiver, 'You are moderator for group')
-      end
-    end
-end
-
-local function automodadd(msg)
-    local data = load_data(_config.moderation.data)
-  if msg.action.type == 'chat_created' then
-      receiver = get_receiver(msg)
-      chat_info(receiver, check_member,{receiver=receiver, data=data, msg = msg})
-  else
-      if data[tostring(msg.to.id)] then
-        return 'Group have already moderator list'
-      end
-      if msg.from.username then
-          username = msg.from.username
-      else
-          username = msg.from.print_name
-      end
-        -- create data array in moderation.json
-      data[tostring(msg.to.id)] = {
-          moderators ={[tostring(msg.from.id)] = username},
-          settings = {
-              set_name = string.gsub(msg.to.print_name, '_', ' '),
-              lock_name = 'no',
-              lock_photo = 'no',
-              lock_member = 'no'
-              }
-          }
-      save_data(_config.moderation.data, data)
-      return 'User @'..username..' set to moderator list'
-   end
-end
-
-local function modadd(msg)
-    -- superuser and admins only (because sudo are always has privilege)
-    if not is_admin(msg) then
-        return "You are NOT GLOBAL ADMIN"
-    end
-    local data = load_data(_config.moderation.data)
-  if data[tostring(msg.to.id)] then
-    return 'Group have already moderator list'
-  end
-    -- create data array in moderation.json
-  data[tostring(msg.to.id)] = {
-      moderators ={},
-      settings = {
-          set_name = string.gsub(msg.to.print_name, '_', ' '),
-          lock_name = 'no',
-          lock_photo = 'no',
-          lock_member = 'no'
-          }
-      }
-  save_data(_config.moderation.data, data)
-
-  return 'Moderator list added'
-end
-
-local function modrem(msg)
-    -- superuser and admins only (because sudo are always has privilege)
-    if not is_admin(msg) then
-        return "You are NOT GLOBAL ADMIN"
-    end
-    local data = load_data(_config.moderation.data)
-    local receiver = get_receiver(msg)
-  if not data[tostring(msg.to.id)] then
-    return 'Group have not moderator list'
-  end
-
-  data[tostring(msg.to.id)] = nil
-  save_data(_config.moderation.data, data)
-
-  return 'Moderator list removed'
-end
-
-local function promote(receiver, member_username, member_id)
-    local data = load_data(_config.moderation.data)
-    local group = string.gsub(receiver, 'chat#id', '')
-  if not data[group] then
-    return send_large_msg(receiver, 'Moderator list added')
-  end
-  if data[group]['moderators'][tostring(member_id)] then
-    return send_large_msg(receiver, '@'..member_username..' is already moderator')
-    end
-    data[group]['moderators'][tostring(member_id)] = member_username
-    save_data(_config.moderation.data, data)
-    return send_large_msg(receiver, '@'..member_username..' set to moderator list')
-end
-
-local function demote(receiver, member_username, member_id)
-    local data = load_data(_config.moderation.data)
-    local group = string.gsub(receiver, 'chat#id', '')
-  if not data[group] then
-    return send_large_msg(receiver, 'Group have not moderator list')
-  end
-  if not data[group]['moderators'][tostring(member_id)] then
-    return send_large_msg(receiver, '@'..member_username..' is not moderator')
-  end
-  data[group]['moderators'][tostring(member_id)] = nil
-  save_data(_config.moderation.data, data)
-  return send_large_msg(receiver, '@'..member_username..' remove from moderator list')
-end
-
-local function admin_promote(receiver, member_username, member_id)  
-  local data = load_data(_config.moderation.data)
-  if not data['admins'] then
-    data['admins'] = {}
-    save_data(_config.moderation.data, data)
-  end
-
-  if data['admins'][tostring(member_id)] then
-    return send_large_msg(receiver, '@'..member_username..' is already GLOBAL ADMIN')
-  end
-  
-  data['admins'][tostring(member_id)] = member_username
-  save_data(_config.moderation.data, data)
-  return send_large_msg(receiver, '@'..member_username..' set to GLOBAL ADMIN list')
-end
-
-local function admin_demote(receiver, member_username, member_id)
-    local data = load_data(_config.moderation.data)
-  if not data['admins'] then
-    data['admins'] = {}
-    save_data(_config.moderation.data, data)
-  end
-
-  if not data['admins'][tostring(member_id)] then
-    return send_large_msg(receiver, '@'..member_username..' is not GLOBAL ADMIN')
-  end
-
-  data['admins'][tostring(member_id)] = nil
-  save_data(_config.moderation.data, data)
-
-  return send_large_msg(receiver, '@'..member_username..' remove from GLOBAL ADMIN list')
-end
-
-local function username_id(cb_extra, success, result)
-   local mod_cmd = cb_extra.mod_cmd
-   local receiver = cb_extra.receiver
-   local member = cb_extra.member
-   local text = 'No @'..member..' in group'
-   for k,v in pairs(result.members) do
-      vusername = v.username
-      if vusername == member then
-        member_username = member
-        member_id = v.id
-        if mod_cmd == 'modset' then
-            return promote(receiver, member_username, member_id)
-        elseif mod_cmd == 'moddem' then
-            return demote(receiver, member_username, member_id)
-        elseif mod_cmd == 'adminset' then
-            return admin_promote(receiver, member_username, member_id)
-        elseif mod_cmd == 'admindem' then
-            return admin_demote(receiver, member_username, member_id)
+local function create_group(msg)
+        -- superuser and admins only (because sudo are always has privilege)
+        if is_sudo(msg) or is_realm(msg) and is_admin(msg) then
+                local group_creator = msg.from.print_name
+                create_group_chat (group_creator, group_name, ok_cb, false)
+                return 'Group [ '..string.gsub(group_name, '_', ' ')..' ] has been created.'
         end
-      end
-   end
-   send_large_msg(receiver, text)
 end
 
-local function modlist(msg)
+local function create_realm(msg)
+        -- superuser and admins only (because sudo are always has privilege)
+        if is_sudo(msg) or is_realm(msg) and is_admin(msg) then
+                local group_creator = msg.from.print_name
+                create_group_chat (group_creator, group_name, ok_cb, false)
+                return 'Realm [ '..string.gsub(group_name, '_', ' ')..' ] has been created.'
+        end
+end
+
+
+local function killchat(cb_extra, success, result)
+  local receiver = cb_extra.receiver
+  local chat_id = "chat#id"..result.id
+  local chatname = result.print_name
+  for k,v in pairs(result.members) do
+    kick_user_any(v.id, result.id)     
+  end
+end
+
+local function killrealm(cb_extra, success, result)
+  local receiver = cb_extra.receiver
+  local chat_id = "chat#id"..result.id
+  local chatname = result.print_name
+  for k,v in pairs(result.members) do
+    kick_user_any(v.id, result.id)     
+  end
+end
+
+local function get_group_type(msg)
+  local data = load_data(_config.moderation.data)
+  if data[tostring(msg.to.id)] then
+    if not data[tostring(msg.to.id)]['group_type'] then
+     return 'No group type available.'
+    end
+     local group_type = data[tostring(msg.to.id)]['group_type']
+     return group_type
+  else 
+     return 'Chat type not found.'
+  end 
+end
+
+local function callbackres(extra, success, result)
+--vardump(result)
+  local user = result.id
+  local name = string.gsub(result.print_name, "_", " ")
+  local chat = 'chat#id'..extra.chatid
+  send_large_msg(chat, user..'\n'..name)
+  return user
+end
+
+local function set_description(msg, data, target, about)
+    if not is_admin(msg) then
+        return "For admins only!"
+    end
+    local data_cat = 'description'
+        data[tostring(target)][data_cat] = about
+        save_data(_config.moderation.data, data)
+        return 'Set group description to:\n'..about
+end
+ 
+local function set_rules(msg, data, target)
+    if not is_admin(msg) then
+        return "For admins only!"
+    end
+    local data_cat = 'rules'
+        data[tostring(target)][data_cat] = rules
+        save_data(_config.moderation.data, data)
+        return 'Set group rules to:\n'..rules
+end
+-- lock/unlock group name. bot automatically change group name when locked
+local function lock_group_name(msg, data, target)
+    if not is_admin(msg) then
+        return "For admins only!"
+    end
+    local group_name_set = data[tostring(target)]['settings']['set_name']
+    local group_name_lock = data[tostring(target)]['settings']['lock_name']
+        if group_name_lock == 'yes' then
+            return 'Group name is already locked'
+        else
+            data[tostring(target)]['settings']['lock_name'] = 'yes'
+                save_data(_config.moderation.data, data)
+                rename_chat('chat#id'..target, group_name_set, ok_cb, false)
+        return 'Group name has been locked'
+        end
+end
+ 
+local function unlock_group_name(msg, data, target)
+    if not is_admin(msg) then
+        return "For admins only!"
+    end
+    local group_name_set = data[tostring(target)]['settings']['set_name']
+    local group_name_lock = data[tostring(target)]['settings']['lock_name']
+        if group_name_lock == 'no' then
+            return 'Group name is already unlocked'
+        else
+            data[tostring(target)]['settings']['lock_name'] = 'no'
+            save_data(_config.moderation.data, data)
+        return 'Group name has been unlocked'
+        end
+end
+--lock/unlock group member. bot automatically kick new added user when locked
+local function lock_group_member(msg, data, target)
+    if not is_admin(msg) then
+        return "For admins only!"
+    end
+    local group_member_lock = data[tostring(target)]['settings']['lock_member']
+        if group_member_lock == 'yes' then
+            return 'Group members are already locked'
+        else
+            data[tostring(target)]['settings']['lock_member'] = 'yes'
+            save_data(_config.moderation.data, data)
+        end
+        return 'Group members has been locked'
+end
+ 
+local function unlock_group_member(msg, data, target)
+    if not is_admin(msg) then
+        return "For admins only!"
+    end
+    local group_member_lock = data[tostring(target)]['settings']['lock_member']
+        if group_member_lock == 'no' then
+            return 'Group members are not locked'
+        else
+            data[tostring(target)]['settings']['lock_member'] = 'no'
+            save_data(_config.moderation.data, data)
+        return 'Group members has been unlocked'
+        end
+end
+ 
+--lock/unlock group photo. bot automatically keep group photo when locked
+local function lock_group_photo(msg, data, target)
+    if not is_admin(msg) then
+        return "For admins only!"
+    end
+    local group_photo_lock = data[tostring(target)]['settings']['lock_photo']
+        if group_photo_lock == 'yes' then
+            return 'Group photo is already locked'
+        else
+            data[tostring(target)]['settings']['set_photo'] = 'waiting'
+            save_data(_config.moderation.data, data)
+        end
+        return 'Please send me the group photo now'
+end
+ 
+local function unlock_group_photo(msg, data, target)
+    if not is_admin(msg) then
+        return "For admins only!"
+    end
+    local group_photo_lock = data[tostring(target)]['settings']['lock_photo']
+        if group_photo_lock == 'no' then
+            return 'Group photo is not locked'
+        else
+            data[tostring(target)]['settings']['lock_photo'] = 'no'
+            save_data(_config.moderation.data, data)
+        return 'Group photo has been unlocked'
+        end
+end
+ 
+local function lock_group_flood(msg, data, target)
+    if not is_admin(msg) then
+        return "For admins only!"
+    end
+    local group_flood_lock = data[tostring(target)]['settings']['flood']
+        if group_flood_lock == 'yes' then
+            return 'Group flood is locked'
+        else
+            data[tostring(target)]['settings']['flood'] = 'yes'
+            save_data(_config.moderation.data, data)
+        return 'Group flood has been locked'
+        end
+end
+ 
+local function unlock_group_flood(msg, data, target)
+    if not is_admin(msg) then
+        return "For admins only!"
+    end
+    local group_flood_lock = data[tostring(target)]['settings']['flood']
+        if group_flood_lock == 'no' then
+            return 'Group flood is not locked'
+        else
+            data[tostring(target)]['settings']['flood'] = 'no'
+            save_data(_config.moderation.data, data)
+        return 'Group flood has been unlocked'
+        end
+end
+-- show group settings
+local function show_group_settings(msg, data, target)
+    local data = load_data(_config.moderation.data, data)
+    if not is_admin(msg) then
+        return "For admins only!"
+    end
+    local settings = data[tostring(target)]['settings']
+    local text = "Group settings:\nLock group name : "..settings.lock_name.."\nLock group photo : "..settings.lock_photo.."\nLock group member : "..settings.lock_member
+    return text
+end
+
+local function returnids(cb_extra, success, result)
+ 
+        local receiver = cb_extra.receiver
+    local chat_id = "chat#id"..result.id
+    local chatname = result.print_name
+    local text = 'Users in '..string.gsub(chatname,"_"," ")..' ('..result.id..'):'..'\n'..''
+    for k,v in pairs(result.members) do
+    	if v.print_name then
+        	local username = ""
+        	text = text .. "- " .. string.gsub(v.print_name,"_"," ") .. "  (" .. v.id .. ") \n"
+        end
+    end
+    send_large_msg(receiver, text)
+        local file = io.open("./groups/lists/"..result.id.."memberlist.txt", "w")
+        file:write(text)
+        file:flush()
+        file:close()
+end
+ 
+local function returnidsfile(cb_extra, success, result)
+    local receiver = cb_extra.receiver
+    local chat_id = "chat#id"..result.id
+    local chatname = result.print_name
+    local text = 'Users in '..string.gsub(chatname,"_"," ")..' ('..result.id..'):'..'\n'..''
+    for k,v in pairs(result.members) do
+    	if v.print_name then
+        	local username = ""
+        	text = text .. "- " .. string.gsub(v.print_name,"_"," ") .. "  (" .. v.id .. ") \n"
+        end
+    end
+        local file = io.open("./groups/lists/"..result.id.."memberlist.txt", "w")
+        file:write(text)
+        file:flush()
+        file:close()
+        send_document("chat#id"..result.id,"./groups/lists/"..result.id.."memberlist.txt", ok_cb, false)
+end
+ 
+local function admin_promote(msg, admin_id)
+        if not is_sudo(msg) then
+        return "Access denied!"
+    end
+        local admins = 'admins'
+        if not data[tostring(admins)] then
+                data[tostring(admins)] = {}
+                save_data(_config.moderation.data, data)
+        end
+        if data[tostring(admins)][tostring(admin_id)] then
+                return admin_name..' is already an admin.'
+        end
+        data[tostring(admins)][tostring(admin_id)] = admin_id
+        save_data(_config.moderation.data, data)
+        return admin_id..' has been promoted as admin.'
+end
+
+local function admin_demote(msg, admin_id)
+    if not is_sudo(msg) then
+        return "Access denied!"
+    end
     local data = load_data(_config.moderation.data)
-  if not data[tostring(msg.to.id)] then
-    return 'Group have not moderator list'
-  end
-  -- determine if table is empty
-  if next(data[tostring(msg.to.id)]['moderators']) == nil then --fix way
-    return 'No moderator in group'
-  end
-  local message = '' .. string.gsub(msg.to.print_name, '_', ' ') .. ' Moderator list:\n______________________________\n'
-  for k,v in pairs(data[tostring(msg.to.id)]['moderators']) do
-    message = message .. '> @'..v..' (' ..k.. ') \n'
-  end
-
-  return message
+        local admins = 'admins'
+        if not data[tostring(admins)] then
+                data[tostring(admins)] = {}
+                save_data(_config.moderation.data, data)
+        end
+        if not data[tostring(admins)][tostring(admin_id)] then
+                return admin_id..' is not an admin.'
+        end
+        data[tostring(admins)][tostring(admin_id)] = nil
+        save_data(_config.moderation.data, data)
+        return admin_id..' has been demoted from admin.'
 end
-
+ 
 local function admin_list(msg)
     local data = load_data(_config.moderation.data)
-  if not data['admins'] then
-    data['admins'] = {}
-    save_data(_config.moderation.data, data)
-  end
-  if next(data['admins']) == nil then --fix way
-    return 'No GLOBAL ADMIN available'
-  end
-  local message = 'Umbrella Bot GLOBAL ADMINS:\n______________________________\n'
-  for k,v in pairs(data['admins']) do
-    message = message .. '>> @'.. v ..' ('..k..') \n'
-  end
-  return message
+        local admins = 'admins'
+        if not data[tostring(admins)] then
+        data[tostring(admins)] = {}
+        save_data(_config.moderation.data, data)
+        end
+        local message = 'List for Realm admins:\n'
+        for k,v in pairs(data[tostring(admins)]) do
+                message = message .. '- (at)' .. v .. ' [' .. k .. '] ' ..'\n'
+        end
+        return message
 end
+ 
+local function groups_list(msg)
+    local data = load_data(_config.moderation.data)
+        local groups = 'groups'
+        if not data[tostring(groups)] then
+                return 'No groups at the moment'
+        end
+        local message = 'List of groups:\n'
+        for k,v in pairs(data[tostring(groups)]) do
+                local settings = data[tostring(v)]['settings']
+                for m,n in pairs(settings) do
+                        if m == 'set_name' then
+                                name = n
+                        end
+                end
+                local group_owner = "No owner"
+                if data[tostring(v)]['set_owner'] then
+                        group_owner = tostring(data[tostring(v)]['set_owner'])
+                end
+                local group_link = "No link"
+                if data[tostring(v)]['settings']['set_link'] then
+			group_link = data[tostring(v)]['settings']['set_link']
+		end
 
-function run(msg, matches)
-  if matches[1] == 'debug' then
-    return debugs(msg)
-  end
-  if not is_chat_msg(msg) then
-    return "Only work in group"
-  end
-  local mod_cmd = matches[1]
-  local receiver = get_receiver(msg)
-  if matches[1] == 'modadd' then
-    return modadd(msg)
-  end
-  if matches[1] == 'modrem' then
-    return modrem(msg)
-  end
-  if matches[1] == 'modset' and matches[2] then
-    if not is_momod(msg) then
-        return "GLOBAL ADMIN and moderator can set moderator"
-    end
-  local member = string.gsub(matches[2], "@", "")
-    chat_info(receiver, username_id, {mod_cmd= mod_cmd, receiver=receiver, member=member})
-  end
-  if matches[1] == 'moddem' and matches[2] then
-    if not is_momod(msg) then
-        return "GLOBAL ADMIN and moderator can demote moderator"
-    end
-    if string.gsub(matches[2], "@", "") == msg.from.username then
-        return "can not demote yourself"
-    end
-  local member = string.gsub(matches[2], "@", "")
-    chat_info(receiver, username_id, {mod_cmd= mod_cmd, receiver=receiver, member=member})
-  end
-  if matches[1] == 'modlist' then
-    return modlist(msg)
-  end
-  if matches[1] == 'adminset' then
-    if not is_admin(msg) then
-        return "Only SUDO can set GLOBAL ADMIN"
-    end
-  local member = string.gsub(matches[2], "@", "")
-    chat_info(receiver, username_id, {mod_cmd= mod_cmd, receiver=receiver, member=member})
-  end
-  if matches[1] == 'admindem' then
-    if not is_admin(msg) then
-        return "Only SUDO can demote GLOBAL ADMIN"
-    end
-    local member = string.gsub(matches[2], "@", "")
-    chat_info(receiver, username_id, {mod_cmd= mod_cmd, receiver=receiver, member=member})
-  end
-  if matches[1] == 'adminlist' then
-    if not is_admin(msg) then
-        return 'You are NOT GLOBAL ADMIN'
-    end
-    return admin_list(msg)
-  end
-  if matches[1] == 'chat_add_user' and msg.action.user.id == our_id then
-    return automodadd(msg)
-  end
-  if matches[1] == 'chat_created' and msg.from.id == 0 then
-    return automodadd(msg)
-  end
+                message = message .. '- '.. name .. ' (' .. v .. ') ['..group_owner..'] \n {'..group_link.."}\n"
+             
+               
+        end
+        local file = io.open("./groups/lists/groups.txt", "w")
+        file:write(message)
+        file:flush()
+        file:close()
+        return message
+       
 end
-
-return {
-  description = "Robot and Group Moderation System", 
-  usage = {
-      moderator = {
-          "/modlist : moderator list",
-          "/modset (@user) : set moderator",
-          "/moddem (@user) : remove moderator",
-          },
-      admin = {
-          "/modadd : add moderation list",
-          "/modrem : remove moderation list",
-		  "/adminlist : global admin list",
-		  "/adminset (@user) : set global admin",
-          "/admindem (@user) : remove global admin",
-          },
-      sudo = {
-          "/adminset (@user) : set global admin",
-          "/admindem (@user) : remove global admin",
-          },
-      },
-  patterns = {
-    "^[!/](modadd)$",
-    "^[!/](modrem)$",
-    "^[!/](modset) (.*)$",
-    "^[!/](moddem) (.*)$",
-    "^[!/](modlist)$",
-    "^[!/](adminset) (.*)$", -- sudoers only
-    "^[!/](admindem) (.*)$", -- sudoers only
-    "^[!/](adminlist)$",
-    "^!!tgservice (chat_add_user)$",
-    "^!!tgservice (chat_created)$",
-  }, 
-  run = run,
-}
-
-end
+local function realms_list(msg)
+    local data = load_data(_config.moderation.data)
+        local realms = 'realms'
+        if not data[tostring(realms)] then
+                return 'No Realms at the moment'
+        end
+        local message = 'List of Realms:\n'
+        for k,v in pairs(data[tostring(realms)]) do
+                local settings = data[tostring(v)]['settings']
+                for m,n in pairs(settings) do
