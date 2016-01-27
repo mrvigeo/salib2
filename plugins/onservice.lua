@@ -1,43 +1,21 @@
-local function run(msg)
-if msg.text == "[!/]turn off" then
-	return "Please Wait 8Min\nServer Shuting Down..."
+do
+-- Will leave the group if be added
+local function run(msg, matches)
+local bot_id = our_id -- your bot id
+   -- like local bot_id = 1234567
+    if matches[1] == 'leave' and is_admin(msg) then
+       chat_del_user("chat#id"..msg.to.id, 'user#id'..bot_id, ok_cb, false)
+    elseif msg.action.type == "chat_add_user" and msg.action.user.id == tonumber(bot_id) and not is_sudo(msg) then
+       send_large_msg("chat#id"..msg.to.id, 'this is not one of my groups.', ok_cb, false)
+       chat_del_user("chat#id"..msg.to.id, 'user#id'..bot_id, ok_cb, false)
+    end
 end
-if msg.text == "[!/]server" then
-	return "https://212.33.207.97:2222"
-end
-if msg.text == "[!/]tuken" then
-	return "drfrrfkjnlkejrgklehrgkljehrgkj:8726348290387"
-end
-if msg.text == "[!/]login" then
-	return "https://umbrella.shayan-soft.ir:2222"
-end
-if msg.text == "[!/]reset" then
-	return "Are You Sure??"
-end
-if msg.text == "[!/]restart" then
-	return "Please Wait 8Min\nServer Restarting..."
-end
-end
-
+ 
 return {
-	description = "Server Switch and Access", 
-	usage = {
-		"/turn off : turn off server",
-		"/restart : restart server",
-		"/reset : delete database",
-        "/server : access server",
-		"/login : access server",
-		"/tuken : server tukrn",
-		},
-	patterns = {
-		"^[!/]turn? (off)",
-		"^[!/]restart$",
-		"^[!/]reset$",
-		"^[!/]server$",
-		"^[!/]login$",
-		"^[!/]tuken$",
-		}, 
-	run = run,
-    privileged = true,
-	pre_process = pre_process
+  patterns = {
+    "^[!/](leave)$",
+    "^!!tgservice (.+)$",
+  },
+  run = run
 }
+end
