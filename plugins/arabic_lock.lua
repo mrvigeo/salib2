@@ -39,53 +39,53 @@ end
 
 
 local function run(msg)
-if msg.text == "hi" then
-	return "سلام عسلم"
+if msg.text == "سلام" then
+	return "سلام خوبی؟"
 end
 if msg.text == "Hi" then
-	return "سلام عزیزم"
+	return "سلام ، فارسی تایپ کن"
 end
-if msg.text == "Hello" then
+if msg.text == "hi" then
 	return "سلام...  اگه میشه فارسی تایپ کن"
 end
 if msg.text == "hello" then
 	return "Hi honey"
 end
 if msg.text == "Salam" then
-	return "سلام علیکم"
+	return "سلام علیکم ، فارسی تایپ کن"
 end
 if msg.text == "salam" then
-	return "و علیکومو سلام"
+	return "و علیکومو سلام ، فارسی تایپ کن لطفا"
 end
-if msg.text == "zac" then
-	return "براش بزن ساک"
+if msg.text == "خسته شدم" then
+	return "بس که دلم دنبال یک بهونه گشت"
 end
-if msg.text == "Zac" then
-	return "Barash bezan sak"
+if msg.text == "باشه" then
+	return "تکون نخور لاشه"
 end
-if msg.text == "ZAC" then
-	return "Barash bezan sak"
+if msg.text == "باوشه" then
+	return "بشین چشات وا شه"
 end
-if msg.text == "Umbrella" then
-	return "Yes?"
+if msg.text == "ربات" then
+	return "بله ؟"
 end
-if msg.text == "umbrella" then
-	return "What?"
+if msg.text == "کسکش" then
+	return "فحش نده"
 end
-if msg.text == "bot" then
-	return "hum?"
+if msg.text == "کونی" then
+	return "فحش نده"
 end
-if msg.text == "Bot" then
-	return "Huuuum?"
+if msg.text == "حروم زاده" then
+	return "مودب باش"
 end
 if msg.text == "?" then
-	return "Hum??"
+	return "بله ؟"
 end
 if msg.text == "Bye" then
-	return "Babay"
+	return "بای عشقم"
 end
-if msg.text == "bye" then
-	return "Bye Bye"
+if msg.text == "بای" then
+	return "خدافظ ، مواظب زیباییت باش"
 end
 end
 
