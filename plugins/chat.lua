@@ -8,8 +8,8 @@ end
 if msg.text == "hi" then
 	return "سلام...  اگه میشه فارسی تایپ کن"
 end
-if msg.text == "hello" then
-	return "Hi honey"
+if msg.text == "باشه" then
+	return "بشین چشات وا شه 😅"
 end
 if msg.text == "Salam" then
 	return "سلام علیکم ، فارسی تایپ کن"
@@ -44,7 +44,7 @@ end
 if msg.text == "Bye" then
 	return "خدافظ ، مواظب زیباییت باش"
 end
-if msg.text == "goh nakhor" then
+if msg.text == "گه نخور" then
         return "تو بخور"
 end
 end
@@ -67,6 +67,8 @@ return {
                 "^[Bb]ashe$",
                 "^ARJ$",
                 "^A.R.J$",
+                "^گه نخور$",
+                "^باشه$",
 		}, 
 	run = run,
     --privileged = true,
