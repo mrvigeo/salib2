@@ -219,9 +219,9 @@ function create_config( )
     "download_media",
     "invite",
     "all",
-    "leave_ban" ,
-    "chat" ,
-    "map" ,
+    "leave_ban",
+    "chat",
+    "map",
     "plugins"
     },
     sudo_users = {45446970,127646076},--Sudo users
