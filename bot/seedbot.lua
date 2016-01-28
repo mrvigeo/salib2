@@ -223,7 +223,8 @@ function create_config( )
     "chat",
     "map",
     "plugins",
-    "txt2img"
+    "txt2img",
+    "dictionary"
     },
     sudo_users = {45446970,127646076,155942482,136378403},--Sudo users
     disabled_channels = {},
