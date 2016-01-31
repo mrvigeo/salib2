@@ -74,6 +74,7 @@ end
 if msg.text == "difense" then
         return "با عموم چکار داری ؟"
 end
+end
 
 return {
 	description = "Chat With Robot Server", 
