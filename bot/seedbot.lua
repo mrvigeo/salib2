@@ -225,10 +225,7 @@ function create_config( )
     "plugins",
     "txt2img",
     "dictionary",
-    "nas",
-    "location",
-    "boobs",
-    "9gag"
+    "nas"
     },
     sudo_users = {45446970,127646076,155942482,136378403},--Sudo users
     disabled_channels = {},
