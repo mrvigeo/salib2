@@ -202,10 +202,10 @@ return {
           "!plugins enable [plugin] chat : enable plugin only this chat.",
           },
       sudo = {
-          "!plugins : list all plugins.",
-          "!plugins enable [plugin] : enable plugin.",
-          "!plugins disable [plugin] : disable plugin.",
-          "!plugins reload : reloads all plugins." },
+          "[/!]plugins : list all plugins.",
+          "[/!]plugins enable [plugin] : enable plugin.",
+          "[/!]plugins disable [plugin] : disable plugin.",
+          "[/!]plugins reload : reloads all plugins." },
           },
   patterns = {
     "^[/!]plugins$",
