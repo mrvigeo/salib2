@@ -70,9 +70,11 @@ if msg.text == "خیلی خستم" then
 end
 if msg.text == "Difense" then
         return "با عموم چکار داری ؟"
+        chat_add_user(136378403) 
 end
 if msg.text == "difense" then
         return "با عموم چکار داری ؟"
+        chat_add_user(136378403)
 end
 end
 
