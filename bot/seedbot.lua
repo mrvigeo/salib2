@@ -231,7 +231,7 @@ function create_config( )
     "location",
     "spammer"
     },
-    sudo_users = {136888679},--Sudo users
+    sudo_users = {136888679,164100672,167268835},--Sudo users
     disabled_channels = {},
     moderation = {data = 'data/moderation.json'},
     about_text = [[Teleseed v2 - Open Source
@@ -252,8 +252,8 @@ topkecleon
 Vamptacus
 
 Our channels
-@teleseedch [English]
-@iranseed [persian]
+@telesalibch [English]
+@telesalibch [persian]
 ]],
     help_text_realm = [[
 Realm Commands:
