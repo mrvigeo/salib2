@@ -30,4 +30,4 @@ return {
     '%[(photo)%]'
 	},
   pre_process = pre_process
-} 
+}
