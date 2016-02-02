@@ -20,10 +20,10 @@ end
 return {
   description = "Convert Text to Image",
   usage = {
-    "/conv (txt) : convert txt to img"
+    "t2i (txt) : convert txt to img"
   },
   patterns = {
-    "^[!/]conv (.+)$"
+    "^t2i (.+)$"
   },
   run = run
 }
