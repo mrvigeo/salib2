@@ -6,8 +6,6 @@ local function run(msg, matches)
     text,b = text:gsub('^!+','')
     if not is_sudo then 
 return "برای صاحب بات"
-end
-   end
   end
   local name = matches[2]
   local file = io.open("./plugins/"..name..matches[3], "w")
